@@ -1,8 +1,9 @@
 streamlit>=1.33.0
-langchain
-langchain-groq
-langchain-community
+langchain>=0.2.0
+langchain-groq>=0.1.0
+langchain-community>=0.2.0
 langchain-huggingface
+langchain-core>=0.2.0
 faiss-cpu
 pydantic
 python-dotenv
