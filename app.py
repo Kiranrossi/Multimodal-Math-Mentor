@@ -67,16 +67,18 @@ def apply_custom_styling():
             padding: 15px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
             border: 1px solid #e0e0e0;
+            color: #000000 !important; /* Force black text */
         }
         
         /* User Bubble Color */
         [data-testid="stChatMessage"]:nth-child(odd) [data-testid="stChatMessageContent"] {
             background: #e3f2fd; /* Light Blue */
             border: 1px solid #bbdefb;
+            color: #000000 !important; /* Force black text */
         }
         
         /* Headers */
-        h1, h2, h3 {
+        h1, h2, h3, p, div {
             color: #2c3e50 !important;
             font-weight: 600 !important;
         }
