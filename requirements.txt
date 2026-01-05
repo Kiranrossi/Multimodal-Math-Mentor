@@ -1,0 +1,14 @@
+streamlit>=1.33.0
+langchain
+langchain-groq
+langchain-community
+langchain-huggingface
+faiss-cpu
+pydantic
+python-dotenv
+groq
+easyocr
+opencv-python-headless
+duckduckgo-search
+sentence-transformers
+protobuf
