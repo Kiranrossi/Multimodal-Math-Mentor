@@ -99,6 +99,16 @@ def apply_custom_styling():
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
         
+        /* Links */
+        a {
+            color: #2575fc !important;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        
     </style>
     """, unsafe_allow_html=True)
 
@@ -263,8 +273,14 @@ def process_math_query(raw_input, input_type="text", related_image=None):
                 status.write("✅ **Recalled**: Solution found in memory.")
             else:
                 status.write("📐 **Solver**: Computing step-by-step solution...")
-                solver = agents.get_solver_agent()
-                final_sol = solver.invoke({"structured_problem": structured_prob})
+                try:
+                    solver = agents.get_solver_agent()
+                    final_sol = solver.invoke({"structured_problem": structured_prob})
+                except Exception as e:
+                    print(f"Solver Error: {e}")
+                    status.update(label="❌ Error", state="error")
+                    st.error(f"Solver failed: {str(e)}")
+                    return
                 
                 status.write("⚖️ **Evaluator**: verifying correctness...")
                 status.write("⚖️ **Evaluator**: verifying correctness...")
