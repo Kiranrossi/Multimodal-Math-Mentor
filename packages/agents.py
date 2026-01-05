@@ -142,9 +142,16 @@ def get_solver_agent():
         except Exception as e:
             return f"Error executing solver: {e}"
 
+    def safe_retrieve(x):
+        try:
+            input_text = x["structured_problem"]["problem_text"] if isinstance(x["structured_problem"], dict) else x["structured_problem"].problem_text
+            return rag.retrieve_context(input_text)
+        except Exception:
+            return ""
+
     chain = (
         RunnablePassthrough.assign(
-            context=lambda x: rag.retrieve_context(x["structured_problem"]["problem_text"] if isinstance(x["structured_problem"], dict) else x["structured_problem"].problem_text)
+            context=lambda x: safe_retrieve(x)
         )
         | format_problem_for_agent
         | run_agent_executor

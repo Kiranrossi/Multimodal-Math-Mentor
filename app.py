@@ -277,9 +277,10 @@ def process_math_query(raw_input, input_type="text", related_image=None):
                     solver = agents.get_solver_agent()
                     final_sol = solver.invoke({"structured_problem": structured_prob})
                 except Exception as e:
-                    print(f"Solver Error: {e}")
                     status.update(label="❌ Error", state="error")
-                    st.error(f"Solver failed: {str(e)}")
+                    err_msg = f"Solver encountered an error: {str(e)}"
+                    st.error(err_msg)
+                    st.session_state.messages.append({"role": "assistant", "content": err_msg})
                     return
                 
                 status.write("⚖️ **Evaluator**: verifying correctness...")
