@@ -46,7 +46,7 @@ graph TD
     Tools -->|Cheat Sheet| UI_Pin[Pin to Sidebar]
     
     Tools --> Formatter[Response Formatting]
-    Formatter -->|Concise | Socratic | Detailed| UI[Final Output]
+    Formatter -->|Concise, Socratic, Detailed| UI[Final Output]
 ```
 
 ---
