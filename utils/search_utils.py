@@ -6,13 +6,12 @@ def get_search_tool():
     """
     return DuckDuckGoSearchRun()
 
-def search_math_context(query):
+def search_web(query):
     """
-    Helper to search the web for math concepts.
+    Helper to search the web for any concepts.
     """
     tool = get_search_tool()
     try:
-        # Append 'math definition' to context to keep it relevant
-        return tool.run(f"{query} math definition application")
+        return tool.run(query)
     except Exception as e:
         return f"Search failed: {e}"

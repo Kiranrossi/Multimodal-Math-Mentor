@@ -1,114 +1,133 @@
 import streamlit as st
 import os
-from dotenv import load_dotenv
-import packages.utils as utils
-import packages.agents as agents
-import packages.memory as memory
-import packages.guardrails as guardrails
-import packages.tools as tools
 
-# Load environment variables
-load_dotenv()
+from utils import helper_utils
+from utils.agent_utils import get_chatbot_agent
+import utils.memory_utils as memory
+import utils.guardrail_utils as guardrails
+from utils.pdf_utils import export_session_to_pdf
 
-st.set_page_config(page_title="Math Mentor Pro", page_icon="🎓", layout="wide")
+st.set_page_config(page_title="Math Mentor & Chatbot AI", page_icon="🎓", layout="wide")
 
 def initialize_session_state():
     if "messages" not in st.session_state:
         st.session_state.messages = [
-            {"role": "assistant", "content": "Hello! I am your Professional Math Mentor. I can help with Algebra, Calculus, Probability, and Linear Algebra."}
+            {"role": "assistant", "content": "Hello! I am your AI Chatbot & Math Mentor. I can answer general knowledge questions using Web Search, solve math problems, or use my local context. How can I help you today?"}
         ]
-    # State for HITL
     if "hitl_active" not in st.session_state:
         st.session_state.hitl_active = False
     if "pending_entry" not in st.session_state:
         st.session_state.pending_entry = None
+    if "response_mode" not in st.session_state:
+        st.session_state.response_mode = "Detailed"
+    if "cheat_sheet" not in st.session_state:
+        st.session_state.cheat_sheet = []
+    if "generated_images" not in st.session_state:
+        st.session_state.generated_images = []
 
 def apply_custom_styling():
     st.markdown("""
     <style>
-        /* Import Font */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
         
-        html, body, [class*="css"]  {
-            font-family: 'Poppins', sans-serif;
+        /* Base typography and layout */
+        html, body, [class*="css"] { 
+            font-family: 'Poppins', sans-serif; 
         }
         
-        /* Background Image - Math/Education Theme */
+        /* Solid sleek dark background */
         .stApp {
-            background-image: url("https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=2600&auto=format&fit=crop");
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
+            background-color: #1a202c; /* elegant dark grey */
         }
-
-        /* Glassmorphism Overlay for Main Content */
+        
+        /* Main chat container */
         .stMainBlockContainer {
-            background: rgba(255, 255, 255, 0.95); /* High opacity white for readability */
+            background: #2d3748; /* slightly lighter dark grey */
             padding: 2.5rem;
-            border-radius: 25px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.18);
+            border: 1px solid #4a5568; /* subtle border */
             margin-top: 30px;
             margin-bottom: 30px;
         }
         
-        /* Dark Mode Support (Optional - forces white text logic if user is in dark mode, but we are using a white glass theme) */
-        
-        /* Chat Message Bubbles */
-        .stChatMessage {
-            background-color: transparent !important;
-        }
+        /* Assistant Chat Message - subtle grey bubble */
+        .stChatMessage { background-color: transparent !important; }
         
         [data-testid="stChatMessageContent"] {
-            background: #ffffff;
-            border-radius: 15px;
+            background: #4a5568; 
+            border-radius: 8px;
             padding: 15px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            border: 1px solid #e0e0e0;
-            color: #000000 !important; /* Force black text */
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.2);
+            border: 1px solid #718096;
+            border-left: 4px solid #10b981; /* NeoStats Green Accent */
+            color: #f7fafc !important;
         }
         
-        /* User Bubble Color */
+        [data-testid="stChatMessageContent"] p {
+            color: #f7fafc !important;
+        }
+        
+        /* User Chat Message - Solid Black */
         [data-testid="stChatMessage"]:nth-child(odd) [data-testid="stChatMessageContent"] {
-            background: #e3f2fd; /* Light Blue */
-            border: 1px solid #bbdefb;
-            color: #000000 !important; /* Force black text */
+            background: #111827; 
+            border: 1px solid #111827;
+            border-left: 4px solid #10b981; /* NeoStats Green Accent */
+            color: #ffffff !important;
         }
         
-        /* Headers */
-        h1, h2, h3, p, div {
-            color: #2c3e50 !important;
-            font-weight: 600 !important;
+        [data-testid="stChatMessage"]:nth-child(odd) [data-testid="stChatMessageContent"] p {
+            color: #ffffff !important;
+            font-weight: 400;
+        }
+
+        /* Titles and headers - adjust color dynamically to light */
+        h1, h2, h3, h4, .stMarkdown p {
+            color: #f7fafc !important;
         }
         
-        /* Buttons */
+        /* Sidebar styling to match dark theme */
+        [data-testid="stSidebar"] {
+            background-color: #111827 !important;
+        }
+        
+        [data-testid="stSidebar"] * {
+             color: #e2e8f0 !important;
+        }
+        
+        /* Buttons general style - Green and Black theme */
         .stButton button {
-            background: linear-gradient(45deg, #6a11cb 0%, #2575fc 100%);
-            color: white !important;
+            background-color: #10b981 !important;
+            color: #ffffff !important;
             border: none;
-            border-radius: 50px;
-            padding: 0.5rem 1.5rem;
+            border-radius: 6px;
             font-weight: 600;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease-in-out;
         }
         
         .stButton button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            background-color: #059669 !important;
+            color: #ffffff !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
         }
         
-        /* Links */
-        a {
-            color: #2575fc !important;
-            text-decoration: none;
-            font-weight: 600;
-        }
-        a:hover {
-            text-decoration: underline;
+        /* Success messages and info */
+        .stSuccess {
+            background-color: #1a202c;
+            color: #10b981;
+            border-left: 4px solid #10b981;
         }
         
+        /* Input elements like chat and radios should be dark */
+        .stChatInputContainer {
+            background-color: #4a5568 !important;
+        }
+        
+        /* Hide deploy button to look like native app */
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        header {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
@@ -116,38 +135,62 @@ def main():
     apply_custom_styling()
     initialize_session_state()
     
-    st.title("🎓 Professional Math Mentor")
+    st.title("🤖 Intelligent Chatbot & Math Mentor")
     st.markdown("---")
 
-    # --- Chat History ---
+    st.sidebar.title("Settings")
+    st.session_state.response_mode = st.sidebar.radio(
+        "Response Mode:",
+        ("Concise", "Detailed", "Socratic"),
+        index=["Concise", "Detailed", "Socratic"].index(st.session_state.response_mode),
+        help="Choose between short replies, expanded responses, or Socratic guidance."
+    )
+    
+    st.sidebar.markdown("---")
+    st.sidebar.title("📝 Dynamic Cheat Sheet")
+    if len(st.session_state.cheat_sheet) == 0:
+        st.sidebar.info("As the AI explains formulas, they will be pinned here!")
+    else:
+        for item in st.session_state.cheat_sheet:
+            with st.sidebar.container(border=True):
+                st.markdown(f"**{item['formula']}**")
+                st.caption(item['description'])
+            
+    st.sidebar.markdown("---")
+    if st.sidebar.button("📄 Export Session to PDF"):
+        if len(st.session_state.messages) > 1:
+            with st.spinner("Generating PDF..."):
+                try:
+                    pdf_path = export_session_to_pdf(st.session_state.messages)
+                    with open(pdf_path, "rb") as file:
+                        st.sidebar.download_button(
+                            label="⬇️ Download PDF",
+                            data=file,
+                            file_name="Math_Session_Notes.pdf",
+                            mime="application/pdf"
+                        )
+                    st.sidebar.success("PDF Generated!")
+                except Exception as e:
+                    st.sidebar.error(f"Failed to generate PDF: {e}")
+        else:
+            st.sidebar.warning("No chat history to export yet.")
+
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
-            # Special formatting for Assistant
-            if msg["role"] == "assistant":
-                if "problem_text" in msg:
-                    # Professional Breakdown
-                    with st.expander("📄 Parser Output", expanded=False):
-                        st.json(msg["raw_data"])
-                    
-                    st.markdown(msg["content"]) # The Solver Output (Explanation + Answer)
-                    
-                    if "confidence" in msg:
-                        color = "green" if msg["confidence"] > 80 else "orange"
-                        st.caption(f"**Verifier Confidence:** :{color}[{msg['confidence']}%]")
-                    
-                    if msg.get("show_feedback", False):
-                        render_feedback_buttons(msg["id"], msg["problem_text"], msg["content"], msg["topic"])
+            st.markdown(msg["content"])
+            if "image_data" in msg and msg["image_data"]:
+                if isinstance(msg["image_data"], list):
+                    for img in msg["image_data"]:
+                        st.image(img, use_container_width=True)
                 else:
-                    st.markdown(msg["content"])
-            else:
-                st.markdown(msg["content"])
-                if "image_data" in msg:
                     st.image(msg["image_data"], width=200)
+            
+            if msg.get("show_feedback", False):
+                render_feedback_buttons(msg["id"], msg["problem_text"], msg["content"])
 
-    # --- HITL Interface ---
     if st.session_state.hitl_active and st.session_state.pending_entry:
         with st.container(border=True):
-            st.warning("⚠️ Human Verification Required")
+            st.warning("⚠️ Human Verification Required for Extracted Input")
             entry = st.session_state.pending_entry
             
             if entry['type'] == 'image':
@@ -157,7 +200,7 @@ def main():
                 with col2:
                     edited_text = st.text_area("Verify Extracted Text:", value=entry['text'], height=200)
                     if st.button("✅ Confirm & Solve", type="primary"):
-                        process_math_query(edited_text, input_type="image", related_image=entry['data'])
+                        process_query(edited_text, input_type="image", related_image=entry['data'])
                         st.session_state.hitl_active = False
                         st.session_state.pending_entry = None
                         st.rerun()
@@ -165,170 +208,137 @@ def main():
             elif entry['type'] == 'audio':
                 st.write(f"**Transcript:** {entry['text']}")
                 if st.button("✅ Confirm & Solve", type="primary"):
-                    process_math_query(entry['text'], input_type="audio")
+                    process_query(entry['text'], input_type="audio")
                     st.session_state.hitl_active = False
                     st.session_state.pending_entry = None
                     st.rerun()
 
-    # --- Input Area ---
     if not st.session_state.hitl_active:
-        
-        # Popover for Attachments
         with st.container():
             col_in, col_btn = st.columns([0.9, 0.1])
             with col_btn:
                 with st.popover("➕", use_container_width=True):
                     st.caption("Add Multimodal Input")
-                    
                     tab1, tab2 = st.tabs(["📸 Image", "🎤 Audio"])
-                    
                     with tab1:
-                        # Conditional Camera (User Request: "take pictures button")
                         enable_cam = st.checkbox("📸 Enable Camera")
-                        img_cam = None
-                        if enable_cam:
-                            img_cam = st.camera_input("Take Photo")
-                        
+                        img_cam = st.camera_input("Take Photo") if enable_cam else None
                         img_up = st.file_uploader("Upload Image", type=["jpg", "png", "jpeg"], key="img_up")
-                        
                         active_img = img_cam if img_cam else img_up
-                        if active_img:
-                            if st.button("Process Image"):
-                                initiate_image_hitl(active_img)
+                        if active_img and st.button("Process Image"):
+                            initiate_image_hitl(active_img)
 
                     with tab2:
-                        # Native Audio Input (Streamlit 1.40+)
                         audio_rec = st.audio_input("Record")
                         audio_up = st.file_uploader("Upload", type=["mp3", "wav", "m4a"], key="aud_up")
-                        
-                        # Priority to recorder if present
                         active_audio = audio_rec if audio_rec else audio_up
-                        
-                        if active_audio:
-                            if st.button("Process Audio"):
-                                initiate_audio_hitl(active_audio)
+                        if active_audio and st.button("Process Audio"):
+                            initiate_audio_hitl(active_audio)
             
             with col_in:
-                if prompt := st.chat_input("Ask a math question..."):
+                if prompt := st.chat_input("Ask a question..."):
                     st.session_state.messages.append({"role": "user", "content": prompt})
-                    process_math_query(prompt)
+                    process_query(prompt)
                     st.rerun()
 
 def initiate_image_hitl(image_file):
-    with st.spinner("🔍 Vision Agent: Extracting text..."):
-        text = utils.analyze_image(image_file)
+    with st.spinner("Extracting text..."):
+        text = helper_utils.analyze_image(image_file)
     st.session_state.pending_entry = {'type': 'image', 'data': image_file, 'text': text}
     st.session_state.hitl_active = True
     st.rerun()
 
 def initiate_audio_hitl(audio_file):
-    with st.spinner("👂 Audio Agent: Transcribing..."):
-        text = utils.transcribe_audio(audio_file)
+    with st.spinner("Transcribing..."):
+        text = helper_utils.transcribe_audio(audio_file)
     st.session_state.pending_entry = {'type': 'audio', 'data': audio_file, 'text': text}
     st.session_state.hitl_active = True
     st.rerun()
 
-def process_math_query(raw_input, input_type="text", related_image=None):
+def process_query(raw_input, input_type="text", related_image=None):
     if input_type == "image":
-        st.session_state.messages.append({"role": "user", "content": "Analyze this image.", "image_data": related_image})
+        st.session_state.messages.append({"role": "user", "content": f"Image extracted text: {raw_input}", "image_data": related_image})
     elif input_type == "audio":
         st.session_state.messages.append({"role": "user", "content": f"🎤 Transcript: {raw_input}"})
 
     with st.chat_message("assistant"):
-        # Explicit Agent Trace Container
-        with st.status("⚙️ **Agent Workflow**", expanded=True) as status:
+        with st.spinner("Thinking..."):
+            st.session_state.generated_images = [] # Clear graph buffer
             
-            # 1. Guardrail
-            status.write("🛡️ **Guardrail**: Validating intent & safety...")
-            safety = guardrails.validate_input(raw_input[:500])
-            if safety == "UNSAFE":
-                status.update(label="❌ Blocked", state="error")
-                st.error("Request blocked by safety guardrails.")
-                st.session_state.messages.append({"role": "assistant", "content": "Request blocked by safety guardrails."})
-                return
-
-            # 2. Parsing
-            status.write("🧩 **Parser**: Extracting parameters...")
-            parser_chain = agents.get_parser_agent()
-            structured_prob = parser_chain.invoke({"raw_input": raw_input})
+            # Step 1: Guardrail
+            intent = guardrails.validate_input(raw_input)
+            is_math_related = (intent == "SAFE_MATH")
             
-            if structured_prob.get("needs_clarification", False) and input_type == "text":
-                status.update(label="⚠️ Needs Clarification", state="error")
-                resp = f"Ambiguous input. Did you mean: '{structured_prob.get('problem_text')}'?"
-                st.markdown(resp)
-                st.session_state.messages.append({"role": "assistant", "content": resp})
-                return
-
-            # 3. Memory & Solving
-            status.write("🧠 **Memory**: Checking knowledge base...")
-            sim_sol = memory.retrieve_similar_solution(structured_prob.get("problem_text"))
+            # Step 2: Memory Checking
+            sim_sol = memory.retrieve_similar_solution(raw_input)
             
-            final_sol = ""
-            conf = 100
             from_mem = False
             
             if sim_sol:
-                final_sol = sim_sol
+                final_answer = sim_sol
                 from_mem = True
-                status.write("✅ **Recalled**: Solution found in memory.")
             else:
-                status.write("📐 **Solver**: Computing step-by-step solution...")
+                # Step 3: Parsing / Solver
                 try:
-                    solver = agents.get_solver_agent()
-                    final_sol = solver.invoke({"structured_problem": structured_prob})
-                except Exception as e:
-                    status.update(label="❌ Error", state="error")
-                    err_msg = f"Solver encountered an error: {str(e)}"
-                    st.error(err_msg)
-                    st.session_state.messages.append({"role": "assistant", "content": err_msg})
-                    return
-                
-                status.write("⚖️ **Evaluator**: verifying correctness...")
-                status.write("⚖️ **Evaluator**: verifying correctness...")
-                try:
-                    evaluator = agents.get_evaluator_agent()
-                    eval_res = evaluator.invoke({"problem_text": structured_prob.get("problem_text"), "proposed_solution": final_sol})
-                    conf = eval_res.get("confidence", 0)
-                except Exception as e:
-                    print(f"Evaluator failed (likely Rate Limit): {e}")
-                    status.write("⚠️ **Evaluator Skipped**: Rate Limit Reached. Proceeding...")
-                    conf = 100 # Assume correct if we can't check
+                    # Convert Streamlit messages to LangChain format if needed, simplistic approach:
+                    from langchain_core.messages import HumanMessage, AIMessage
+                    history = []
+                    # Skip the first generic greeting message to save tokens, or include all
+                    for msg in st.session_state.messages[:-1]: # exclude the one we just appended
+                        if msg["role"] == "user":
+                            history.append(HumanMessage(content=msg["content"]))
+                        else:
+                            history.append(AIMessage(content=msg["content"]))
 
-                
-            status.update(label="✅ **Complete**: Solution Ready", state="complete")
-            
-            # Render Final Output
-            with st.expander("📄 Parser Output", expanded=False):
-                st.json(structured_prob)
-            st.markdown(final_sol)
-            if not from_mem:
-                color = "green" if conf > 80 else "orange"
-                st.caption(f"**Verifier Confidence:** :{color}[{conf}%]")
-            
-            # Save
-            st.session_state.messages.append({
-                "role": "assistant",
-                "content": final_sol,
-                "raw_data": structured_prob,
-                "confidence": conf,
-                "id": len(st.session_state.messages),
-                "show_feedback": not from_mem,
-                "problem_text": structured_prob.get("problem_text"),
-                "topic": structured_prob.get("topic")
-            })
-            
-            if not from_mem:
-                render_feedback_buttons(len(st.session_state.messages), structured_prob.get("problem_text"), final_sol, structured_prob.get("topic"))
+                    agent_chain = get_chatbot_agent(mode=st.session_state.response_mode)
+                    response = agent_chain.invoke({
+                        "input": raw_input,
+                        "chat_history": history
+                    })
+                    final_answer = response.get("output", "Could not produce an answer.")
+                    
+                except Exception as e:
+                    final_answer = f"I encountered an error while processing your request: {e}"
+        
+        st.markdown(final_answer)
+        
+        # Display dynamically generated graphs
+        new_images = None
+        if len(st.session_state.generated_images) > 0:
+            new_images = st.session_state.generated_images.copy()
+            for img in new_images:
+                st.image(img, use_container_width=True)
+            st.session_state.generated_images = [] # Reset buffer
+        
+        msg_id = len(st.session_state.messages)
+        show_fb = (not from_mem) and is_math_related
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": final_answer,
+            "id": msg_id,
+            "show_feedback": show_fb,
+            "problem_text": raw_input,
+            "image_data": new_images
+        })
+        
+        if show_fb:
+            render_feedback_buttons(msg_id, raw_input, final_answer)
 
-def render_feedback_buttons(msg_id, problem, solution, topic):
+def render_feedback_buttons(msg_id, problem, solution):
     c1, c2 = st.columns(2)
     with c1:
         if st.button("✅ Accurate", key=f"up_{msg_id}"):
-            memory.save_to_memory(problem, solution, topic)
-            st.success("Memorized for future!")
+            memory.save_to_memory(problem, solution)
+            st.success("Verified and memorized for the future!")
+            for msg in st.session_state.messages:
+                if msg.get("id") == msg_id:
+                    msg["show_feedback"] = False
     with c2:
         if st.button("❌ Inaccurate", key=f"down_{msg_id}"):
             st.error("Flagged for review.")
+            for msg in st.session_state.messages:
+                if msg.get("id") == msg_id:
+                    msg["show_feedback"] = False
 
 if __name__ == "__main__":
     main()

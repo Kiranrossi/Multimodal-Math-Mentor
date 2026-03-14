@@ -1,164 +1,146 @@
-# 🎓 Multimodal Math Mentor Pro
-# streamlit cloud link : https://multimodal-math-mentor-erfwdtdnygvpixfmd5qpdt.streamlit.app/
-**An Advanced Agentic AI Tutor for STEM Education**
+# 🎓 Intelligent Chatbot & Math Mentor
+
+**Streamlit Cloud Link:** [https://multimodal-math-mentor-erfwdtdnygvpixfmd5qpdt.streamlit.app/](https://multimodal-math-mentor-erfwdtdnygvpixfmd5qpdt.streamlit.app/)
+
+An advanced, multimodal AI tutoring system and general-purpose chatbot. Designed to help students master complex mathematical concepts and answer general queries using real-time web search and dynamic graphing capabilities.
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
 ![LangChain](https://img.shields.io/badge/LangChain-Orchestration-green)
 ![Groq](https://img.shields.io/badge/Groq-LPU%20Inference-orange)
 ![Streamlit](https://img.shields.io/badge/Streamlit-UI-red)
 
-## � Overview
+---
 
-**Math Mentor Pro** is a cutting-edge, multimodal AI tutoring system designed to help students master complex mathematical concepts (Algebra, Calculus, Linear Algebra, Probability). Unlike standard chatbots, it functions as a **System of Agents** that "think," "critique," and "remember."
+## 🚀 Overview
 
-It mimics a human tutor's workflow:
-1.  **Sees** the problem (Computer Vision).
-2.  **Hears** the question (Audio Transcription).
-3.  **Parses** the intent (Structured Extraction).
-4.  **Recalls** similar past problems (Vector Memory).
-5.  **Solves** it step-by-step (Logic Engine).
-6.  **Verifies** its own work (Auto-Critique).
+**Math Mentor & Chatbot AI** goes beyond traditional conversational agents. It functions as a complete **learning dashboard**, featuring adaptive response modes, interactive mathematical graphing, local memory caching, and self-building cheat sheets. 
+
+It handles multimodal inputs—allowing you to snap pictures of handwritten math problems or simply speak to it—and verifies your input using a Human-In-The-Loop (HITL) pipeline to ensure perfect accuracy.
 
 ---
 
 ## 🏗️ System Architecture
 
-The application is built on a **Multi-Agent RAG (Retrieval-Augmented Generation)** architecture.
-
 ```mermaid
 graph TD
     User[User Input] -->|Text / Image / Audio| Router{Input Type}
     
-    Router -->|Image| Vision[Llama-4 Scout / OCR]
+    Router -->|Image| Vision[Llama-4 / EasyOCR]
     Router -->|Audio| Audio[Whisper Large V3]
     Router -->|Text| Guardrail[Guardrail Agent]
     
-    Vision --> Guardrail
-    Audio --> Guardrail
+    Vision --> HITL[Human-In-The-Loop Verification]
+    Audio --> HITL
+    HITL --> Guardrail
     
-    Guardrail -->|Safe| Parser[Parser Agent]
-    Guardrail -->|Unsafe| Block[❌ Block Request]
+    Guardrail -->|SAFE_MATH| Memory[FAISS Memory Cache]
+    Guardrail -->|GENERAL_QUERY| Agent[LangChain Orchestrator]
     
-    Parser -->|Structured JSON| Memory{Check Memory?}
+    Memory -->|Match Found| Recall[✅ Direct Cache Hit]
+    Memory -->|New Problem| Agent
     
-    Memory -->|Found Similar| Retrieve[✅ Return Cached Solution]
+    Agent --> Tools{Tool Execution}
+    Tools -->|Graphing| Matplotlib[Python Charts]
+    Tools -->|Web Search| DuckDuckGo[Fact Checking]
+    Tools -->|RAG| LocalDB[Local Knowledge]
+    Tools -->|Cheat Sheet| UI_Pin[Pin to Sidebar]
     
-    Memory -->|New Problem| Solver[Solver Agent]
-    Solver -->|Draft Solution| Evaluator[Evaluator/Critic Agent]
-    
-    Evaluator -->|Approved| UI[Final Output]
-    UI -->|User Feedback| VectorStore[FAISS Database]
+    Tools --> Formatter[Response Formatting]
+    Formatter -->|Concise | Socratic | Detailed| UI[Final Output]
 ```
 
 ---
 
-## 🧠 The Agentic Brain
+## ✨ Core Features
 
-We utilize a **Hybrid Model Strategy** to balance intelligence, speed, and cost.
+### 🧠 Adaptive Response Modes
+- **Detailed:** Provides in-depth, step-by-step explanations, evaluates web results for confidence, and proactively pins formulas to your cheat sheet.
+- **Concise:** Skips the fluff and delivers direct answers and final equations.
+- **Socratic (Mentorship):** Refuses to just "give you the answer." Instead, it guides you by asking probing pedagogical questions to help you solve the problem yourself.
 
-### 1. **Visual Cortex (Vision Agent)**
--   **Model**: `meta-llama/llama-4-scout-17b` (Preview)
--   **Role**: Acts as a "Dumb Scanner."
--   **Logic**: Strictly instructed to **transcribe only**. It does *not* solve the problem—it simply digitizes handwriting into text/LaTeX for the downstream agents.
--   **Fallback**: Automatically degrades to `EasyOCR` if the API fails.
+### 📈 Interactive Graphing Engine
+Ask it to "Visualize `np.sin(x)`" or "Plot `x^2 - 4`," and the AI will dynamically write and execute Python Matplotlib code in the background, rendering a perfectly scaled graph directly in your chat history.
 
-### 2. **Parser Agent**
--   **Model**: `llama-3.1-8b-instant`
--   **Role**: Structured Data Extraction.
--   **Function**: Converts raw user chaos ("help me solve this calc prob") into structured JSON:
-    ```json
-    {
-      "topic": "Calculus",
-      "problem_text": "Integrate x^2",
-      "variables": ["x"],
-      "needs_clarification": false
-    }
-    ```
+### 📝 Dynamic Cheat Sheet
+As the AI tutor explains key theorems or formulas (like the Quadratic Formula or Pythagorean Theorem), it proactively uses an internal tool to "pin" these equations to your sidebar dashboard, building a personalized quick-reference guide during your session.
 
-### 3. **Solver Agent ( The Tutor )**
--   **Model**: `llama-3.1-8b-instant` (Optimized for Speed)
--   **Role**: Step-by-Step Reasoning.
--   **Behavior**:
-    -   Retrieves formula context from the Knowledge Base (RAG).
-    -   Uses a strict **Didactic Framework**: "Understanding -> Key Info -> Formula -> Calculation -> Conclusion."
-    -   **Output**: Plain Text (readable `3/8` fractions), avoiding complex LaTeX that confuses beginners.
+### 💾 Local Semantic Memory (FAISS)
+If you solve a problem and mark it as **"✅ Accurate"**, the query and solution are instantly vectorized via HuggingFace `all-MiniLM-L6-v2` and saved to a local FAISS database. If you (or another student) ask a similar question later, the system perfectly retrieves the cached answer in 0.1 seconds, bypassing the LLM generation entirely.
 
-### 4. **Evaluator Agent ( The Critic )**
--   **Model**: `llama-3.1-8b-instant`
--   **Role**: Quality Assurance.
--   **Function**: Reviews the Solver's draft before showing it to the user. If confidence is low (<80%), it flags the answer.
--   **Robustness**: Includes `Graceful Failure` handling—if Rate Limits are hit, it skips verification rather than crashing the app.
+### 🛡️ AI Guardrails & Safety
+Every input is screened by an instantaneous Llama-3.1-8b guardrail that classifies the intent as `SAFE_MATH`, `GENERAL_QUERY`, or `UNSAFE`. This ensures the specific Math UI components (like the Verification buttons) only appear when appropriate.
+
+### 📄 Session-to-PDF Export
+At the end of a tutoring session, simply click the "Export Session to PDF" button to convert your entire history into a beautifully formatted, downloadable `.pdf` study guide.
 
 ---
 
-## ⚡ Key Features
+## 🛠️ Technology Stack
 
-### 👁️ Multimodal Inputs
--   **Snap & Solve**: Upload an image of a handwritten equation. The system uses HITL (Human-in-the-Loop) to let you verify the scan before solving.
--   **Speak & Solve**: Record your question audibly. The `Whisper-v3` model transcribes it instantly.
-
-### 💾 Long-Term Memory (RAG + FAISS)
--   **Learning**: When you mark an answer as "✅ Accurate," it is vectorized and saved to a local FAISS index.
--   **Recall**: Before solving a new problem, the system performs a **Similarity Search**. If a semantically similar question exists (score < 0.3), it instantly recalls the proven solution, saving compute and ensuring consistency.
-
-### 🛡️ Guardrails
--   **Safety**: Pre-screening logic prevents the system from answering non-math queries (e.g., "How to make a bomb").
+- **Frontend Interface:** Streamlit (Custom Dark/Green Enterprise Theme)
+- **AI Orchestration:** LangChain (Tool Calling Agents)
+- **Primary LLM:** Groq `llama-3.3-70b-versatile` (Fast, high IQ tool usage)
+- **Guardrail LLM:** Groq `llama-3.1-8b-instant` (Low latency routing)
+- **Vector Database:** FAISS
+- **Embeddings:** HuggingFace `all-MiniLM-L6-v2`
+- **Vision/Audio:** EasyOCR, Llama-4-Vision, Whisper-v3
+- **Graphing Module:** Matplotlib, Numpy
 
 ---
 
-## 🛠️ Technical Implementation Details
+## 📂 Project Structure
 
-### Tech Stack
--   **Orchestration**: LangChain (Chains, Runnables, Agents).
--   **LLM Provider**: Groq (LPU Inference for sub-second latency).
--   **Vector Store**: FAISS (Local dense vector search).
--   **Frontend**: Streamlit (Python-native UI).
--   **Embeddings**: `HuggingFace / all-MiniLM-L6-v2`.
-
-### Formatting Standards
-The system enforces **Plain Text Math** for maximum accessibility:
--   **Fractions**: `3/8` (Not `\frac{3}{8}`)
--   **Power**: `x^2`
--   **Multiplication**: `*` or `x`
-
----
-
-## � Installation & Setup
-
-### Prerequisites
--   Python 3.10+
--   A [Groq API Key](https://console.groq.com)
-
-### 1. Clone & Install
-```bash
-git clone https://github.com/your-repo/math-mentor.git
-cd math-mentor
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
-
-### 2. Configure Environment
-Create a `.env` file in the root directory:
-```bash
-GROQ_API_KEY=gsk_your_key_here
-```
-
-### 3. Run the Application
-```bash
-streamlit run app.py
+```text
+math-mentor/
+├── app.py                      # Main Streamlit Application & UI logic
+├── models/
+│   ├── embeddings.py           # HuggingFace FAISS embeddings setup
+│   └── llm.py                  # Groq LLM initialization
+├── utils/
+│   ├── agent_utils.py          # Core LangChain Agent & Tool definitions
+│   ├── guardrail_utils.py      # Pre-flight query classification
+│   ├── helper_utils.py         # Image (OCR) and Audio parsing logic
+│   ├── memory_utils.py         # FAISS read/write and Vector caching
+│   ├── pdf_utils.py            # FPDF2 Chat history exporter
+│   ├── rag_utils.py            # Document retrieval context
+│   └── search_utils.py         # Web Search API integration
+├── data/                       # Local storage (Memory JSON & FAISS Index)
+├── generated_graphs/           # Temporary storage for dynamic UI plots
+├── exports/                    # Output directory for Session PDFs
+├── requirements.txt            # Python dependencies
+└── config/
+    └── config.py               # Environment variable handlers
 ```
 
 ---
 
-## ⚠️ Troubleshooting
+## ⚙️ Installation & Setup
 
-**"Rate Limit Exceeded"**
--   The system automatically handles this by downgrading strictly to `8b-instant` models and skipping the optional "Evaluator" step. You will see a warning, but the app will **not** crash.
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/your-username/math-mentor.git
+   cd math-mentor
+   ```
 
-**"Vision Error"**
--   If the `Llama-4` model is updated/moved, the system will print a "Vision API failed" message and strictly use `EasyOCR` instead. Ensure your image is clear and well-lit.
+2. **Create / Activate a Virtual Environment:**
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # (Mac/Linux)
+   # venv\Scripts\activate   # (Windows)
+   ```
 
----
+3. **Install Dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-**Developed with ❤️ by Kiran.**
+4. **Set Up API Keys:**
+   Create a `.env` file in the root directory and add your Groq API Key:
+   ```env
+   GROQ_API_KEY=your_groq_api_key_here
+   ```
+
+5. **Run the Application locally:**
+   ```bash
+   streamlit run app.py
+   ```

@@ -1,31 +1,20 @@
 import os
 import base64
-from langchain_groq import ChatGroq
-from langchain_core.messages import HumanMessage
 from groq import Groq
+from config.config import GROQ_API_KEY
 import io
 
 def encode_image(image_file):
-    """
-    Encodes a file-like object (image) to base64 string.
-    """
     return base64.b64encode(image_file.getvalue()).decode('utf-8')
 
 def analyze_image(image_file):
-    """
-    Analyzes an image using Groq's Vision model, falling back to EasyOCR.
-    """
-    api_key = os.getenv("GROQ_API_KEY")
-    if not api_key:
+    if not GROQ_API_KEY:
         return analyze_image_with_easyocr(image_file)
 
-    client = Groq(api_key=api_key)
+    client = Groq(api_key=GROQ_API_KEY)
     
     try:
-        # Encode image to base64
         base64_image = encode_image(image_file)
-        
-        # Try the new "Scout" model (Llama 4 Preview) found in active models list
         model_id = "meta-llama/llama-4-scout-17b-16e-instruct" 
         
         chat_completion = client.chat.completions.create(
@@ -49,7 +38,7 @@ def analyze_image(image_file):
             ],
             model=model_id,
             temperature=0.0,
-            max_tokens=1024, # Limiting tokens to discourage long explanations
+            max_tokens=1024,
         )
         return chat_completion.choices[0].message.content
     except Exception as e:
@@ -57,15 +46,11 @@ def analyze_image(image_file):
         return analyze_image_with_easyocr(image_file)
 
 def analyze_image_with_easyocr(image_file):
-    """
-    Fallback: Analyzes an image using EasyOCR.
-    """
     try:
         import easyocr
         import numpy as np
         from PIL import Image
         
-        # Reset file pointer if needed or re-open
         image_file.seek(0) 
         image = Image.open(image_file)
         image_np = np.array(image)
@@ -76,33 +61,17 @@ def analyze_image_with_easyocr(image_file):
     except Exception as e:
         return f"Error analyzing image with EasyOCR: {str(e)}"
 
-
 def transcribe_audio(audio_file):
-    """
-    Transcribes audio using Groq's Whisper model.
-    
-    Args:
-        audio_file: A file-like object containing the audio.
-        
-    Returns:
-        str: The transcribed text.
-    """
-    api_key = os.getenv("GROQ_API_KEY")
-    if not api_key:
+    if not GROQ_API_KEY:
         return "Error: GROQ_API_KEY not found."
 
-    client = Groq(api_key=api_key)
-    
-    # We need to save the file temporarily because Groq client expects a file path or tuple
-    # Streamlit UploadedFile is file-like. Groq Python SDK handles file-like objects? 
-    # Let's try passing the tuple (filename, file_obj) which is standard for requests/httpx.
+    client = Groq(api_key=GROQ_API_KEY)
     
     try:
-        # Whisper model on Groq
         transcription = client.audio.transcriptions.create(
             file=(audio_file.name, audio_file.read()),
             model="whisper-large-v3",
-            prompt="Transcribe this math question clearly. Use standard math terminology.",
+            prompt="Transcribe this question clearly.",
             response_format="text"
         )
         return transcription
