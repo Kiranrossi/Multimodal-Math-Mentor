@@ -50,6 +50,7 @@ def plot_math_function(equation_str: str) -> str:
     x = np.linspace(-10, 10, 400)
     allowed_names = {k: v for k, v in np.__dict__.items() if not k.startswith('_')}
     allowed_names['x'] = x
+    allowed_names['np'] = np
     
     try:
         y = eval(equation_str, {"__builtins__": {}}, allowed_names)
@@ -130,6 +131,7 @@ For math problems: SKIP the steps and ONLY output the final number, equation, or
 Use tools if necessary.
 If you use a formula, consider using the add_to_cheat_sheet tool.
 If the user asks for a graph, use the plot_math_function tool.
+If the user is just saying hello or socializing, reply naturally without using ANY tools.
 Do not use complicated formatting.
 """
     elif mode == "Socratic":
@@ -144,6 +146,7 @@ HOWEVER, if the user asks a generic question entirely unrelated to math (like "h
 Use tools if you need to look up facts, but still guide the user with questions for math concepts.
 Use the add_to_cheat_sheet tool if discussing an important formula.
 If the user asks for a graph, use the plot_math_function tool to help them visualize it.
+If the user is just saying hello or socializing, reply naturally without using ANY tools.
 """
     else:
         system_prompt = """You are an expert Math Tutor and highly intelligent AI.
@@ -158,6 +161,7 @@ NEVER just give the final answer. Act like a professor writing a textbook chapte
 ALWAYS use the add_to_cheat_sheet tool when introducing a new formula or theorem.
 If the user asks to see a graph or visualize a formula, use the plot_math_function tool.
 For general knowledge, use web search and deeply analyze the confidence of the results.
+If the user is just saying hello or socializing, reply naturally without using ANY tools.
 """
     
     prompt = ChatPromptTemplate.from_messages([
