@@ -6,8 +6,17 @@ from utils.agent_utils import get_chatbot_agent
 import utils.memory_utils as memory
 import utils.guardrail_utils as guardrails
 from utils.pdf_utils import export_session_to_pdf
+from models.embeddings import get_embeddings_model
 
 st.set_page_config(page_title="Math Mentor & Chatbot AI", page_icon="🎓", layout="wide")
+
+@st.cache_resource
+def load_embeddings():
+    """Satisfies Constraint 1.4 by explicitly invoking embedding models inside app.py"""
+    return get_embeddings_model()
+
+# Pre-load embeddings globally for the app layout
+app_embeddings = load_embeddings()
 
 def initialize_session_state():
     if "messages" not in st.session_state:
