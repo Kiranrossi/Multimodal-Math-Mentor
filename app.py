@@ -1,5 +1,6 @@
 import streamlit as st
 import os
+import re
 
 from utils import helper_utils
 from utils.agent_utils import get_chatbot_agent
@@ -312,6 +313,14 @@ def process_query(raw_input, input_type="text", related_image=None):
                         "chat_history": history
                     })
                     final_answer = response.get("output", "Could not produce an answer.")
+                    
+                    # Sanitize lingering Groq tool XML representations
+                    final_answer = re.sub(r'<[^>]*>\{.*?\}</[^>]*>', '', final_answer)
+                    final_answer = re.sub(r'<function=[^>]*>.*?</function>', '', final_answer)
+                    final_answer = re.sub(r'</?function[^>]*>', '', final_answer)
+                    for tool_name in ["web_search", "plot_math_function", "local_knowledge_search", "add_to_cheat_sheet"]:
+                        final_answer = re.sub(f'</?{tool_name}[^>]*>', '', final_answer)
+                    final_answer = final_answer.strip()
                     
                 except Exception as e:
                     final_answer = f"I encountered an error while processing your request: {e}"
