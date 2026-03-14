@@ -287,7 +287,7 @@ def process_query(raw_input, input_type="text", related_image=None):
             is_math_related = (intent == "SAFE_MATH")
             
             # Step 2: Memory Checking
-            sim_sol = memory.retrieve_similar_solution(raw_input)
+            sim_sol = memory.retrieve_similar_solution(raw_input, app_embeddings)
             
             from_mem = False
             
@@ -345,7 +345,7 @@ def render_feedback_buttons(msg_id, problem, solution):
     c1, c2 = st.columns(2)
     with c1:
         if st.button("✅ Accurate", key=f"up_{msg_id}"):
-            memory.save_to_memory(problem, solution)
+            memory.save_to_memory(problem, solution, app_embeddings)
             st.success("Verified and memorized for the future!")
             for msg in st.session_state.messages:
                 if msg.get("id") == msg_id:

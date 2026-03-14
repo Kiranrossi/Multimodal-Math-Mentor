@@ -2,10 +2,9 @@ import os
 from langchain_community.vectorstores import FAISS
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from langchain_text_splitters import CharacterTextSplitter
-from models.embeddings import get_embeddings_model
 from config.config import app_config
 
-def build_vectorstore():
+def build_vectorstore(embeddings):
     if not os.path.exists("data/knowledge_base"):
         os.makedirs("data/knowledge_base", exist_ok=True)
         return "No knowledge base directory found."
@@ -20,7 +19,6 @@ def build_vectorstore():
         text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=50)
         chunks = text_splitter.split_documents(documents)
 
-        embeddings = get_embeddings_model()
         vectorstore = FAISS.from_documents(chunks, embeddings)
         
         vectorstore.save_local(app_config.VECTOR_STORE_PATH)
@@ -29,13 +27,11 @@ def build_vectorstore():
         print(f"Error building vectorstore: {e}")
         return f"Build failed: {e}"
 
-def get_retriever():
+def get_retriever(embeddings):
     try:
-        embeddings = get_embeddings_model()
-        
         if not os.path.exists(app_config.VECTOR_STORE_PATH):
             print("Index not found. Building...")
-            res = build_vectorstore()
+            res = build_vectorstore(embeddings)
             print(res)
 
         vectorstore = FAISS.load_local(app_config.VECTOR_STORE_PATH, embeddings, allow_dangerous_deserialization=True)
@@ -44,9 +40,9 @@ def get_retriever():
         print(f"Error getting retriever: {e}")
         raise e
 
-def retrieve_context(query):
+def retrieve_context(query, embeddings):
     try:
-        retriever = get_retriever()
+        retriever = get_retriever(embeddings)
         docs = retriever.invoke(query)
         return "\n\n".join([d.page_content for d in docs])
     except Exception as e:

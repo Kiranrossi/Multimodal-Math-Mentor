@@ -3,7 +3,7 @@ import os
 import faiss
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
-from models.embeddings import get_embeddings_model
+from langchain_core.documents import Document
 
 MEMORY_FILE = "data/memory.json"
 MEMORY_INDEX_PATH = "data/memory_index"
@@ -17,7 +17,7 @@ def load_memory():
         except:
             return []
 
-def save_to_memory(problem_text, solution_text, topic="General"):
+def save_to_memory(problem_text, solution_text, embeddings, topic="General"):
     memories = load_memory()
     new_entry = {
         "problem": problem_text,
@@ -29,10 +29,10 @@ def save_to_memory(problem_text, solution_text, topic="General"):
     with open(MEMORY_FILE, "w") as f:
         json.dump(memories, f, indent=2)
         
-    rebuild_memory_index(memories)
+    rebuild_memory_index(memories, embeddings)
     return "Saved to memory!"
 
-def rebuild_memory_index(memories):
+def rebuild_memory_index(memories, embeddings):
     if not memories:
         return
     
@@ -41,15 +41,13 @@ def rebuild_memory_index(memories):
         for m in memories
     ]
     
-    embeddings = get_embeddings_model()
     vectorstore = FAISS.from_documents(documents, embeddings)
     vectorstore.save_local(MEMORY_INDEX_PATH)
 
-def retrieve_similar_solution(current_problem_text):
+def retrieve_similar_solution(current_problem_text, embeddings):
     if not os.path.exists(MEMORY_INDEX_PATH):
         return None
         
-    embeddings = get_embeddings_model()
     try:
         vectorstore = FAISS.load_local(MEMORY_INDEX_PATH, embeddings, allow_dangerous_deserialization=True)
         docs = vectorstore.similarity_search_with_score(current_problem_text, k=1)
