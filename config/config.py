@@ -9,7 +9,7 @@ class AppConfig:
         if not self.GROQ_API_KEY:
             raise ValueError("CRITICAL: GROQ_API_KEY environment variable is missing. Application cannot start.")
         
-        self.SERPAPI_API_KEY = os.getenv("SERPAPI_API_KEY")
+        self.TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
         
         self.VECTOR_STORE_PATH = os.getenv("VECTOR_STORE_PATH", "data/faiss_index")
         self.MODEL_NAME_VERSATILE = os.getenv("MODEL_NAME_VERSATILE", "llama-3.3-70b-versatile")
