@@ -1,17 +1,14 @@
 import os
 import base64
 from groq import Groq
-from config.config import GROQ_API_KEY
+from config.config import app_config
 import io
 
 def encode_image(image_file):
     return base64.b64encode(image_file.getvalue()).decode('utf-8')
 
 def analyze_image(image_file):
-    if not GROQ_API_KEY:
-        return analyze_image_with_easyocr(image_file)
-
-    client = Groq(api_key=GROQ_API_KEY)
+    client = Groq(api_key=app_config.GROQ_API_KEY)
     
     try:
         base64_image = encode_image(image_file)
@@ -62,10 +59,7 @@ def analyze_image_with_easyocr(image_file):
         return f"Error analyzing image with EasyOCR: {str(e)}"
 
 def transcribe_audio(audio_file):
-    if not GROQ_API_KEY:
-        return "Error: GROQ_API_KEY not found."
-
-    client = Groq(api_key=GROQ_API_KEY)
+    client = Groq(api_key=app_config.GROQ_API_KEY)
     
     try:
         transcription = client.audio.transcriptions.create(

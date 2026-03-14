@@ -3,7 +3,7 @@ from langchain_community.vectorstores import FAISS
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from langchain_text_splitters import CharacterTextSplitter
 from models.embeddings import get_embeddings_model
-from config.config import VECTOR_STORE_PATH
+from config.config import app_config
 
 def build_vectorstore():
     if not os.path.exists("data/knowledge_base"):
@@ -23,7 +23,7 @@ def build_vectorstore():
         embeddings = get_embeddings_model()
         vectorstore = FAISS.from_documents(chunks, embeddings)
         
-        vectorstore.save_local(VECTOR_STORE_PATH)
+        vectorstore.save_local(app_config.VECTOR_STORE_PATH)
         return f"Vector store built with {len(chunks)} chunks."
     except Exception as e:
         print(f"Error building vectorstore: {e}")
@@ -33,12 +33,12 @@ def get_retriever():
     try:
         embeddings = get_embeddings_model()
         
-        if not os.path.exists(VECTOR_STORE_PATH):
+        if not os.path.exists(app_config.VECTOR_STORE_PATH):
             print("Index not found. Building...")
             res = build_vectorstore()
             print(res)
 
-        vectorstore = FAISS.load_local(VECTOR_STORE_PATH, embeddings, allow_dangerous_deserialization=True)
+        vectorstore = FAISS.load_local(app_config.VECTOR_STORE_PATH, embeddings, allow_dangerous_deserialization=True)
         return vectorstore.as_retriever(search_kwargs={"k": 3})
     except Exception as e:
         print(f"Error getting retriever: {e}")

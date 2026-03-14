@@ -1,16 +1,12 @@
-import os
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
+from config.config import app_config
 
 def get_guardrail_agent():
-    api_key = os.getenv("GROQ_API_KEY")
-    if not api_key:
-        raise ValueError("GROQ_API_KEY not found.")
-    
     llm = ChatGroq(
-        model="llama-3.1-8b-instant",
-        api_key=api_key,
+        model=app_config.MODEL_NAME_INSTANT,
+        api_key=app_config.GROQ_API_KEY,
         temperature=0.0
     )
     
