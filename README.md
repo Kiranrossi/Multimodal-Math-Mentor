@@ -41,7 +41,7 @@ graph TD
     
     Agent --> Tools{Tool Execution}
     Tools -->|Graphing| Matplotlib[Python Charts]
-    Tools -->|Web Search| DuckDuckGo[Fact Checking]
+    Tools -->|Web Search| Tavily[Contextual Web Search]
     Tools -->|RAG| LocalDB[Local Knowledge]
     Tools -->|Cheat Sheet| UI_Pin[Pin to Sidebar]
     
@@ -79,12 +79,13 @@ At the end of a tutoring session, simply click the "Export Session to PDF" butto
 
 - **Frontend Interface:** Streamlit (Custom Dark/Green Enterprise Theme)
 - **AI Orchestration:** LangChain (Tool Calling Agents)
-- **Primary LLM:** Groq `llama-3.3-70b-versatile` (Fast, high IQ tool usage)
+- **Primary LLM:** Groq `llama-3.1-8b-instant` (Fast, high IQ tool usage - circumvents free tier limits)
 - **Guardrail LLM:** Groq `llama-3.1-8b-instant` (Low latency routing)
 - **Vector Database:** FAISS
-- **Embeddings:** HuggingFace `all-MiniLM-L6-v2`
+- **Embeddings:** HuggingFace `all-MiniLM-L6-v2` (Globally Cached)
 - **Vision/Audio:** EasyOCR, Llama-4-Vision, Whisper-v3
-- **Graphing Module:** Matplotlib, Numpy
+- **Graphing Module:** Matplotlib, Numpy, AST Sandbox
+- **Web Search Engine:** Tavily Search API
 
 ---
 
@@ -107,7 +108,8 @@ math-mentor/
 ├── data/                       # Local storage (Memory JSON & FAISS Index)
 ├── generated_graphs/           # Temporary storage for dynamic UI plots
 ├── exports/                    # Output directory for Session PDFs
-├── requirements.txt            # Python dependencies
+├── requirements-base.txt       # Core production dependencies
+├── requirements-dev.txt        # local development & testing
 └── config/
     └── config.py               # Environment variable handlers
 ```
@@ -131,13 +133,14 @@ math-mentor/
 
 3. **Install Dependencies:**
    ```bash
-   pip install -r requirements.txt
+   pip install -r requirements-base.txt
    ```
 
 4. **Set Up API Keys:**
-   Create a `.env` file in the root directory and add your Groq API Key:
+   Create a `.env` file in the root directory and add your Groq and Tavily API Keys:
    ```env
    GROQ_API_KEY=your_groq_api_key_here
+   TAVILY_API_KEY=tvly-your_tavily_api_key_here
    ```
 
 5. **Run the Application locally:**
