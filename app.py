@@ -144,7 +144,7 @@ def main():
     apply_custom_styling()
     initialize_session_state()
     
-    st.title("🤖 Intelligent Chatbot & Math Mentor")
+    st.title("Math Mentor Chatbot")
     st.markdown("---")
 
     st.sidebar.title("Settings")

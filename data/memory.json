@@ -8,5 +8,10 @@
     "problem": "what is 10 + 12?",
     "solution": "To calculate 10 + 12, we simply add the two numbers together.\n\n10 + 12 = 22\n\nSo the answer is 22.",
     "topic": "General"
+  },
+  {
+    "problem": "what is 25 + 987 = ?",
+    "solution": "To calculate the sum of 25 and 987, we simply add the two numbers together.\n\n25 + 987 = 1012\n\nSo the answer is 1012.",
+    "topic": "General"
   }
 ]
