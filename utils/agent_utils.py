@@ -134,8 +134,6 @@ If you use a formula, consider using the add_to_cheat_sheet tool.
 If the user asks for a graph, use the plot_math_function tool.
 If the user is just saying hello or socializing, reply naturally without using ANY tools.
 Do not use complicated formatting.
-
-CRITICAL RULE: If you decide to use ANY tool, you MUST output ONLY the tool call and absolutely NO conversational text before or after it.
 """
     elif mode == "Socratic":
         system_prompt = """You are an expert Socratic Math Tutor.
@@ -150,8 +148,6 @@ Use tools if you need to look up facts, but still guide the user with questions 
 Use the add_to_cheat_sheet tool if discussing an important formula.
 If the user asks for a graph, use the plot_math_function tool to help them visualize it.
 If the user is just saying hello or socializing, reply naturally without using ANY tools.
-
-CRITICAL RULE: If you decide to use ANY tool, you MUST output ONLY the tool call and absolutely NO conversational text before or after it.
 """
     else:
         system_prompt = """You are an expert Math Tutor and highly intelligent AI.
@@ -167,8 +163,6 @@ ALWAYS use the add_to_cheat_sheet tool when introducing a new formula or theorem
 If the user asks to see a graph or visualize a formula, use the plot_math_function tool.
 For general knowledge, use web search and deeply analyze the confidence of the results.
 If the user is just saying hello or socializing, reply naturally without using ANY tools.
-
-CRITICAL RULE: If you decide to use ANY tool, you MUST output ONLY the tool call and absolutely NO conversational text before or after it.
 """
     
     prompt = ChatPromptTemplate.from_messages([
