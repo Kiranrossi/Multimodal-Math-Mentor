@@ -1,18 +1,1 @@
-streamlit>=1.33.0
-langchain==0.2.6
-langchain-core==0.2.10
-langchain-community==0.2.6
-langchain-groq==0.1.6
-langchain-huggingface
-faiss-cpu
-pydantic
-python-dotenv
-groq
-easyocr
-opencv-python-headless
-duckduckgo-search
-sentence-transformers
-protobuf
-matplotlib
-numpy
-fpdf2
+-r requirements-base.txt
