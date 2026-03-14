@@ -1,14 +1,17 @@
-from langchain_community.tools import DuckDuckGoSearchRun
+from langchain_community.utilities import SerpAPIWrapper
+from config.config import app_config
 
 def get_search_tool():
     """
-    Returns a configured DuckDuckGo search tool.
+    Returns a configured SerpAPI search wrapper.
     """
-    return DuckDuckGoSearchRun()
+    if not app_config.SERPAPI_API_KEY:
+        raise ValueError("SERPAPI_API_KEY must be set in your .env to use web search.")
+    return SerpAPIWrapper(serpapi_api_key=app_config.SERPAPI_API_KEY)
 
 def search_web(query):
     """
-    Helper to search the web for any concepts.
+    Helper to search the web using SerpAPI.
     """
     tool = get_search_tool()
     try:
