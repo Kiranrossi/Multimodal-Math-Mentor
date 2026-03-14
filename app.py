@@ -307,7 +307,7 @@ def process_query(raw_input, input_type="text", related_image=None):
                         else:
                             history.append(AIMessage(content=msg["content"]))
 
-                    agent_chain = get_chatbot_agent(mode=st.session_state.response_mode)
+                    agent_chain = get_chatbot_agent(app_embeddings, mode=st.session_state.response_mode)
                     response = agent_chain.invoke({
                         "input": raw_input,
                         "chat_history": history

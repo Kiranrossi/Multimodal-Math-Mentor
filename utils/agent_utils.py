@@ -13,10 +13,6 @@ from models.llm import get_llm
 from utils.rag_utils import retrieve_context
 from utils.search_utils import get_search_tool
 
-@tool
-def local_knowledge_search(query: str) -> str:
-    """Useful to search the local knowledge base for specific mathematical concepts, local context, or project-specific data."""
-    return retrieve_context(query)
 
 @tool
 def plot_math_function(equation_str: str) -> str:
@@ -92,9 +88,14 @@ def add_to_cheat_sheet(formula: str, description: str) -> str:
     st.session_state.cheat_sheet.append({"formula": formula, "description": description})
     return "Successfully added to cheat sheet dashboard."
 
-def get_chatbot_agent(mode="Detailed"):
+def get_chatbot_agent(embeddings, mode="Detailed"):
     llm = get_llm(temperature=0.2)
     search_tool_instance = get_search_tool()
+    
+    @tool
+    def local_knowledge_search(query: str) -> str:
+        """Useful to search the local knowledge base for specific mathematical concepts, local context, or project-specific data."""
+        return retrieve_context(query, embeddings)
     
     @tool
     def web_search(query: str) -> str:
