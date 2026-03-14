@@ -89,37 +89,38 @@ def add_to_cheat_sheet(formula: str, description: str) -> str:
     st.session_state.cheat_sheet.append({"formula": formula, "description": description})
     return "Successfully added to cheat sheet dashboard."
 
-def get_chatbot_agent(embeddings, mode="Detailed"):
-    llm = get_llm(temperature=0.2)
+@tool
+def local_knowledge_search(query: str) -> str:
+    """Useful to search the local knowledge base for specific mathematical concepts, local context, or project-specific data."""
+    return retrieve_context(query)
+
+@tool
+def web_search(query: str) -> str:
+    """Useful to search the real-time web for facts, information, and general knowledge."""
     search_tool_instance = get_search_tool()
-    
-    @tool
-    def local_knowledge_search(query: str) -> str:
-        """Useful to search the local knowledge base for specific mathematical concepts, local context, or project-specific data."""
-        return retrieve_context(query, embeddings)
-    
-    @tool
-    def web_search(query: str) -> str:
-        """Useful to search the real-time web for facts, information, and general knowledge."""
-        if mode != "Detailed":
-            try:
-                return search_tool_instance.run(query)
-            except Exception as e:
-                return f"Search failed: {e}"
-                
+    mode = st.session_state.get("response_mode", "Detailed")
+    if mode != "Detailed":
         try:
-            res1 = search_tool_instance.run(query)
-            res2 = search_tool_instance.run(f"{query} explanation facts")
-            match_ratio = difflib.SequenceMatcher(None, res1, res2).ratio()
-            
-            if match_ratio > 0.2:
-                confidence = "High Confidence (95% - Cross-verified multiple sources)"
-            else:
-                confidence = "Low Confidence (Warning: Sources may conflict or data is sparse)"
-                
-            return f"[{confidence}]\n\nSearch Result:\n{res1}"
+            return search_tool_instance.run(query)
         except Exception as e:
             return f"Search failed: {e}"
+            
+    try:
+        res1 = search_tool_instance.run(query)
+        res2 = search_tool_instance.run(f"{query} explanation facts")
+        match_ratio = difflib.SequenceMatcher(None, res1, res2).ratio()
+        
+        if match_ratio > 0.2:
+            confidence = "High Confidence (95% - Cross-verified multiple sources)"
+        else:
+            confidence = "Low Confidence (Warning: Sources may conflict or data is sparse)"
+            
+        return f"[{confidence}]\n\nSearch Result:\n{res1}"
+    except Exception as e:
+        return f"Search failed: {e}"
+
+def get_chatbot_agent(mode="Detailed"):
+    llm = get_llm(temperature=0.2)
 
     tools = [web_search, local_knowledge_search, plot_math_function, add_to_cheat_sheet]
     

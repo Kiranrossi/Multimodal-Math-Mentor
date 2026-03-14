@@ -287,7 +287,7 @@ def process_query(raw_input, input_type="text", related_image=None):
             is_math_related = (intent == "SAFE_MATH")
             
             # Step 2: Memory Checking
-            sim_sol = memory.retrieve_similar_solution(raw_input, app_embeddings)
+            sim_sol = memory.retrieve_similar_solution(raw_input)
             
             from_mem = False
             
@@ -307,7 +307,7 @@ def process_query(raw_input, input_type="text", related_image=None):
                         else:
                             history.append(AIMessage(content=msg["content"]))
 
-                    agent_chain = get_chatbot_agent(app_embeddings, mode=st.session_state.response_mode)
+                    agent_chain = get_chatbot_agent(mode=st.session_state.response_mode)
                     response = agent_chain.invoke({
                         "input": raw_input,
                         "chat_history": history
@@ -345,7 +345,7 @@ def render_feedback_buttons(msg_id, problem, solution):
     c1, c2 = st.columns(2)
     with c1:
         if st.button("✅ Accurate", key=f"up_{msg_id}"):
-            memory.save_to_memory(problem, solution, app_embeddings)
+            memory.save_to_memory(problem, solution)
             st.success("Verified and memorized for the future!")
             for msg in st.session_state.messages:
                 if msg.get("id") == msg_id:
