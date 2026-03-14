@@ -8,7 +8,7 @@ import utils.guardrail_utils as guardrails
 from utils.pdf_utils import export_session_to_pdf
 from models.embeddings import get_embeddings_model
 
-st.set_page_config(page_title="Math Mentor & Chatbot AI", page_icon="🎓", layout="wide")
+st.set_page_config(page_title="Math Mentor & Chatbot AI", page_icon="🎓", layout="wide", initial_sidebar_state="expanded")
 
 @st.cache_resource
 def load_embeddings():
@@ -136,7 +136,6 @@ def apply_custom_styling():
         /* Hide deploy button to look like native app */
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
-        header {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
