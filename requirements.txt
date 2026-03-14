@@ -13,3 +13,6 @@ opencv-python-headless
 duckduckgo-search
 sentence-transformers
 protobuf
+matplotlib
+numpy
+fpdf2
