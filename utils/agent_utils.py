@@ -4,6 +4,8 @@ import numpy as np
 import os
 import uuid
 import difflib
+import ast
+import re
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.agents import create_tool_calling_agent, AgentExecutor
 from langchain_core.tools import tool
@@ -24,6 +26,31 @@ def plot_math_function(equation_str: str) -> str:
     Example: 'np.sin(x)' or 'x**2 + 2*x' or 'np.log(x)'.
     DO NOT use math.sin, ONLY np.sin.
     """
+    if len(equation_str) > 200:
+        return "Error: Equation is too long (limit 200 characters)."
+    if '__' in equation_str:
+        return "Error: Unsafe equation format detected."
+        
+    # AST-based sandbox validation
+    try:
+        tree = ast.parse(equation_str, mode='eval')
+        allowed_nodes = (
+            ast.Expression, ast.Call, ast.Name, ast.Load,
+            ast.BinOp, ast.UnaryOp, ast.operator, ast.unaryop,
+            ast.Add, ast.Sub, ast.Mult, ast.Div, ast.FloorDiv, ast.Pow, ast.Mod,
+            ast.UAdd, ast.USub, ast.Constant, ast.Num, ast.Attribute
+        )
+        for node in ast.walk(tree):
+            if not isinstance(node, allowed_nodes):
+                raise ValueError(f"Disallowed syntax node: {type(node).__name__}")
+            if isinstance(node, ast.Name) and node.id not in ('x', 'np'):
+                raise ValueError(f"Disallowed variable: {node.id}")
+            if isinstance(node, ast.Attribute):
+                if not isinstance(node.value, ast.Name) or node.value.id != 'np':
+                    raise ValueError("Only 'np' attributes are allowed.")
+    except Exception as e:
+        return f"Error: Invalid or unsafe mathematical expression. ({str(e)})"
+
     x = np.linspace(-10, 10, 400)
     allowed_names = {k: v for k, v in np.__dict__.items() if not k.startswith('_')}
     allowed_names['x'] = x
