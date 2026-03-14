@@ -252,14 +252,22 @@ def main():
 
 def initiate_image_hitl(image_file):
     with st.spinner("Extracting text..."):
-        text = helper_utils.analyze_image(image_file)
+        try:
+            text = helper_utils.analyze_image(image_file)
+        except Exception as e:
+            text = f"[Error]: Failed to extract text: {e}"
+            st.error("Failed to process image.")
     st.session_state.pending_entry = {'type': 'image', 'data': image_file, 'text': text}
     st.session_state.hitl_active = True
     st.rerun()
 
 def initiate_audio_hitl(audio_file):
     with st.spinner("Transcribing..."):
-        text = helper_utils.transcribe_audio(audio_file)
+        try:
+            text = helper_utils.transcribe_audio(audio_file)
+        except Exception as e:
+            text = f"[Error]: Failed to transcribe audio: {e}"
+            st.error("Failed to process audio.")
     st.session_state.pending_entry = {'type': 'audio', 'data': audio_file, 'text': text}
     st.session_state.hitl_active = True
     st.rerun()

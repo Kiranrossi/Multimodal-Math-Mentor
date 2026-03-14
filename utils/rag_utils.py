@@ -10,31 +10,39 @@ def build_vectorstore():
         os.makedirs("data/knowledge_base", exist_ok=True)
         return "No knowledge base directory found."
 
-    loader = DirectoryLoader("data/knowledge_base", glob="**/*.md", loader_cls=TextLoader)
-    documents = loader.load()
-    
-    if not documents:
-        return "No documents found in data/knowledge_base."
+    try:
+        loader = DirectoryLoader("data/knowledge_base", glob="**/*.md", loader_cls=TextLoader)
+        documents = loader.load()
+        
+        if not documents:
+            return "No documents found in data/knowledge_base."
 
-    text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-    chunks = text_splitter.split_documents(documents)
+        text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+        chunks = text_splitter.split_documents(documents)
 
-    embeddings = get_embeddings_model()
-    vectorstore = FAISS.from_documents(chunks, embeddings)
-    
-    vectorstore.save_local(VECTOR_STORE_PATH)
-    return f"Vector store built with {len(chunks)} chunks."
+        embeddings = get_embeddings_model()
+        vectorstore = FAISS.from_documents(chunks, embeddings)
+        
+        vectorstore.save_local(VECTOR_STORE_PATH)
+        return f"Vector store built with {len(chunks)} chunks."
+    except Exception as e:
+        print(f"Error building vectorstore: {e}")
+        return f"Build failed: {e}"
 
 def get_retriever():
-    embeddings = get_embeddings_model()
-    
-    if not os.path.exists(VECTOR_STORE_PATH):
-        print("Index not found. Building...")
-        res = build_vectorstore()
-        print(res)
+    try:
+        embeddings = get_embeddings_model()
+        
+        if not os.path.exists(VECTOR_STORE_PATH):
+            print("Index not found. Building...")
+            res = build_vectorstore()
+            print(res)
 
-    vectorstore = FAISS.load_local(VECTOR_STORE_PATH, embeddings, allow_dangerous_deserialization=True)
-    return vectorstore.as_retriever(search_kwargs={"k": 3})
+        vectorstore = FAISS.load_local(VECTOR_STORE_PATH, embeddings, allow_dangerous_deserialization=True)
+        return vectorstore.as_retriever(search_kwargs={"k": 3})
+    except Exception as e:
+        print(f"Error getting retriever: {e}")
+        raise e
 
 def retrieve_context(query):
     try:
