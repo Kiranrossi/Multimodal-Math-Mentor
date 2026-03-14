@@ -12,7 +12,7 @@ class AppConfig:
         self.TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
         
         self.VECTOR_STORE_PATH = os.getenv("VECTOR_STORE_PATH", "data/faiss_index")
-        self.MODEL_NAME_VERSATILE = os.getenv("MODEL_NAME_VERSATILE", "llama-3.3-70b-versatile")
+        self.MODEL_NAME_VERSATILE = os.getenv("MODEL_NAME_VERSATILE", "llama-3.1-8b-instant")
         self.MODEL_NAME_INSTANT = os.getenv("MODEL_NAME_INSTANT", "llama-3.1-8b-instant")
 
 app_config = AppConfig()
